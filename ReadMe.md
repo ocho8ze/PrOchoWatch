@@ -22,26 +22,31 @@ Clone the repository and navigate into it:
 ```bash
 git clone https://github.com/ocho8sze/PrOchoWatch.git
 cd PrOchoWatch
+```
 
 ## 🛠️ Usage
 
 Initialize the FIM baseline:
 ```bash
-sudo python3 PrOchoWatch.py --init-baseline```
+sudo python3 PrOchoWatch.py --init-baseline
+```
 
 Start continuous monitoring:
 ```bash
-sudo python3 PrOchoWatch.py```
+sudo python3 PrOchoWatch.py
+```
 
 Run a one-shot scan:
 ```bash
-sudo python3 PrOchoWatch.py --once ````
+sudo python3 PrOchoWatch.py --once
+```
 
 ## 📑 Example Alerts
 ```bash
 [HIGH] PROC/BLACKLIST: Forbidden process detected: /tmp/xmrig
 [HIGH] FIM/MODIFIED: Modification detected in /etc/passwd
-[HIGH] LOG/SSH_FAIL: Failed password for invalid user admin from 192.168.1.10```
+[HIGH] LOG/SSH_FAIL: Failed password for invalid user admin from 192.168.1.10
+```
 
 ## ⚙️ Configuration
 The tool uses a JSON configuration file: PrOchoWatchConf.json.
@@ -63,7 +68,8 @@ Example:
     "suspicious_path_prefixes": ["/tmp", "/dev/shm", "/var/tmp"],
     "blacklist_names": ["xmrig", "kinsing", "minerd"]
   }
-}```
+}
+```
 You can adapt these parameters for your own environment (directories, rules, blacklisted processes…).
 
 ## ⚠️ Limitations
