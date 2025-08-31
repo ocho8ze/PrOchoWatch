@@ -1,0 +1,91 @@
+{
+    "data_dir": str(DEFAULT_DATA_DIR),
+    "alerting": {
+        "alerts_jsonl": "alerts.jsonl",
+        "app_log": "PrOchoWatch.log",
+        "print_to_console": True
+    },
+    "fim": {
+        "paths": ["/etc", "/usr/bin", "/usr/sbin", "/tmp"],
+        "exclude_globs": ["*.log", "*.tmp", "*.cache*", "*.swp", "*.journal"],
+        "max_file_size_mb": 20,
+        "hash_large_files": False,
+        "interval_sec": 300,
+        "auto_update_baseline": True
+    },
+        "logmon": {
+        "files": ["/var/log/auth.log"],
+        "interval_sec": 2,
+        "rules": [
+            {"id": "SSH_FAIL", "pattern": r"Failed password for", "severity": "high", "throttle_sec": 30},
+            {"id": "SUDO_DENIED", "pattern": r"sudo: .* user NOT in sudoers", "severity": "medium", "throttle_sec": 60},
+            {"id": "ROOT_LOGIN", "pattern": r"Accepted .* for root ", "severity": "high", "throttle_sec": 60},
+            {"id": "SUDO_FAIL", "pattern": r"sudo: .*incorrect password", "severity": "high", "throttle_sec": 60},
+            {"id": "SUDO_ENUM", "pattern": r"sudo: .*COMMAND=.*sudo -l", "severity": "medium", "throttle_sec": 120},
+
+            # --- Détections GTFOBins via sudo (élévation) ---
+            # vim/vi/nvim -> shell via :! / -c '!sh'
+            {"id": "SUDO_GTFO_VIM_SHELL",
+             "pattern": r"sudo: .* COMMAND=.*\b(vim|vi|nvim)\b.*(-c|--cmd).*[!:\s]?(sh|bash|zsh|/bin/sh)",
+             "severity": "high", "throttle_sec": 60},
+
+            # tar -> --checkpoint-action=exec=/bin/sh
+            {"id": "SUDO_GTFO_TAR_EXEC",
+             "pattern": r"sudo: .* COMMAND=.*\btar\b.*--checkpoint-action=exec(=|:)\s*/?bin/(sh|bash|zsh)\b",
+             "severity": "high", "throttle_sec": 60},
+
+            # find -> -exec /bin/sh
+            {"id": "SUDO_GTFO_FIND_EXEC",
+             "pattern": r"sudo: .* COMMAND=.*\bfind\b.*-exec\s*/?bin/(sh|bash|zsh)\b",
+             "severity": "high", "throttle_sec": 60},
+
+            # awk -> system('/bin/sh') ou équiv.
+            {"id": "SUDO_GTFO_AWK_SYSTEM",
+             "pattern": r"sudo: .* COMMAND=.*\bawk\b.*(system\s*\(|/bin/(sh|bash|zsh))",
+             "severity": "high", "throttle_sec": 60},
+
+            # perl -e 'exec "/bin/sh"' / system …
+            {"id": "SUDO_GTFO_PERL_EXEC",
+             "pattern": r"sudo: .* COMMAND=.*\bperl\b.*-e.*\b(exec|system)\b.*(/?bin/(sh|bash|zsh))",
+             "severity": "high", "throttle_sec": 60},
+
+            # python / python3 -c 'import os; os.system(...)' / subprocess / pty
+            {"id": "SUDO_GTFO_PYTHON_OS_SYSTEM",
+             "pattern": r"sudo: .* COMMAND=.*\bpython(3)?\b.*-c.*(os\.system\(|subprocess\.|pty\.spawn\()",
+             "severity": "high", "throttle_sec": 60},
+
+            # less -> ‘!’ (shell escape)
+            {"id": "SUDO_GTFO_LESS_BANG",
+             "pattern": r"sudo: .* COMMAND=.*\bless\b.*!.*",
+             "severity": "medium", "throttle_sec": 120},
+
+            # générique
+            {"id": "SUDO_DIRECT_SHELL",
+             "pattern": r"sudo: .* COMMAND=.*\b(/?bin/)?(sh|bash|zsh)\b(\s|$)",
+             "severity": "high", "throttle_sec": 120}
+        ]
+    },
+    "procmon": {
+        "interval_sec": 5,
+        "suspicious_path_prefixes": ["/tmp", "/dev/shm", "/var/tmp"],
+        "blacklist_names": ["xmrig", "kinsing", "kworkerds", "minerd", "nc", "socat"],
+        "proc_alert_throttle_sec": 120,
+        "expected_system_procs": {
+            "sshd": ["/usr/sbin/sshd", "/usr/lib/openssh/sbin/sshd"],
+            "cron": ["/usr/sbin/cron", "/usr/sbin/crond", "/usr/bin/crond"],
+            "rsyslogd": ["/usr/sbin/rsyslogd"],
+            "systemd": ["/lib/systemd/systemd", "/usr/lib/systemd/systemd"]
+        },
+        "suspicious_name_regexes": [
+            r"^kworkerz",
+            r"^cron+d$",
+            r"^syslogd$",
+            r"^sshd:$", 
+            r"^[a-z]{1,2}$",
+            r"^bashd$|^zshd$|^pty\d*$"
+        ],
+        "kernel_like_names": ["kthreadd", "kswapd0", "ksoftirqd", "kworker"]
+        ,
+        "active_response": {"kill_on_blacklist": False}
+    }
+}
