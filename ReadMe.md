@@ -27,13 +27,46 @@ cd PrOchoWatch
 
 Initialize the FIM baseline:
 ```bash
-sudo python3 PrOchoWatch.py --init-baseline
+sudo python3 PrOchoWatch.py --init-baseline```
 
 Start continuous monitoring:
-sudo python3 PrOchoWatch.py --watch
+```bash
+sudo python3 PrOchoWatch.py```
+
 Run a one-shot scan:
-sudo python3 PrOchoWatch.py --scan
-📑 Example Alerts
+```bash
+sudo python3 PrOchoWatch.py --once ````
+
+## 📑 Example Alerts
+```bash
 [HIGH] PROC/BLACKLIST: Forbidden process detected: /tmp/xmrig
 [HIGH] FIM/MODIFIED: Modification detected in /etc/passwd
-[HIGH] LOG/SSH_FAIL: Failed password for invalid user admin from 192.168.1.10
+[HIGH] LOG/SSH_FAIL: Failed password for invalid user admin from 192.168.1.10```
+
+## ⚙️ Configuration
+The tool uses a JSON configuration file: PrOchoWatchConf.json.
+Example:
+```json
+{
+  "fim": {
+    "paths": ["/etc", "/usr/bin", "/usr/sbin", "/tmp"],
+    "interval_sec": 300
+  },
+  "logmon": {
+    "files": ["/var/log/auth.log"],
+    "rules": [
+      {"id": "SSH_FAIL", "pattern": "Failed password for", "severity": "high"}
+    ]
+  },
+  "procmon": {
+    "interval_sec": 5,
+    "suspicious_path_prefixes": ["/tmp", "/dev/shm", "/var/tmp"],
+    "blacklist_names": ["xmrig", "kinsing", "minerd"]
+  }
+}```
+You can adapt these parameters for your own environment (directories, rules, blacklisted processes…).
+
+## ⚠️ Limitations
+Relies on polling (periodic scans), no direct kernel integration.
+May produce false positives depending on the environment.
+Requires administrator privileges for full functionality.
