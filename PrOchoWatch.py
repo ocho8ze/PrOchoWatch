@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Rattrapage Garni Ibrahim 3SI3 Projet Annuel
+Garni Ibrahim 3SI3 Projet Annuel
 PrOchoWatch.py
 
 Intitulé du sujet:
@@ -98,38 +98,28 @@ DEFAULT_CONFIG = {
 
             # tar -> --checkpoint-action=exec=/bin/sh
             {"id": "SUDO_GTFO_TAR_EXEC",
-             "pattern": r"sudo: .* COMMAND=.*\btar\b.*--checkpoint-action=exec(=|:)\s*/?bin/(sh|bash|zsh)\b",
-             "severity": "high", "throttle_sec": 60},
+             "pattern": r"sudo: .* COMMAND=.*\btar\b.*--checkpoint-action=exec(=|:)\s*/?bin/(sh|bash|zsh)\b","severity": "high", "throttle_sec": 60},
 
             # find -> -exec /bin/sh
             {"id": "SUDO_GTFO_FIND_EXEC",
-             "pattern": r"sudo: .* COMMAND=.*\bfind\b.*-exec\s*/?bin/(sh|bash|zsh)\b",
-             "severity": "high", "throttle_sec": 60},
+             "pattern": r"sudo: .* COMMAND=.*\bfind\b.*-exec\s*/?bin/(sh|bash|zsh)\b", "severity": "high", "throttle_sec": 60},
 
             # awk -> system('/bin/sh') ou équiv.
-            {"id": "SUDO_GTFO_AWK_SYSTEM",
-             "pattern": r"sudo: .* COMMAND=.*\bawk\b.*(system\s*\(|/bin/(sh|bash|zsh))",
-             "severity": "high", "throttle_sec": 60},
+            {"id": "SUDO_GTFO_AWK_SYSTEM", "pattern": r"sudo: .* COMMAND=.*\bawk\b.*(system\s*\(|/bin/(sh|bash|zsh))", "severity": "high", "throttle_sec": 60},
 
             # perl -e 'exec "/bin/sh"' / system …
             {"id": "SUDO_GTFO_PERL_EXEC",
-             "pattern": r"sudo: .* COMMAND=.*\bperl\b.*-e.*\b(exec|system)\b.*(/?bin/(sh|bash|zsh))",
-             "severity": "high", "throttle_sec": 60},
+             "pattern": r"sudo: .* COMMAND=.*\bperl\b.*-e.*\b(exec|system)\b.*(/?bin/(sh|bash|zsh))", "severity": "high", "throttle_sec": 60},
 
             # python / python3 -c 'import os; os.system(...)' / subprocess / pty
             {"id": "SUDO_GTFO_PYTHON_OS_SYSTEM",
-             "pattern": r"sudo: .* COMMAND=.*\bpython(3)?\b.*-c.*(os\.system\(|subprocess\.|pty\.spawn\()",
-             "severity": "high", "throttle_sec": 60},
+             "pattern": r"sudo: .* COMMAND=.*\bpython(3)?\b.*-c.*(os\.system\(|subprocess\.|pty\.spawn\()", "severity": "high", "throttle_sec": 60},
 
             # less -> ‘!’ (shell escape)
-            {"id": "SUDO_GTFO_LESS_BANG",
-             "pattern": r"sudo: .* COMMAND=.*\bless\b.*!.*",
-             "severity": "medium", "throttle_sec": 120},
+            {"id": "SUDO_GTFO_LESS_BANG", "pattern": r"sudo: .* COMMAND=.*\bless\b.*!.*", "severity": "medium", "throttle_sec": 120},
 
             # générique
-            {"id": "SUDO_DIRECT_SHELL",
-             "pattern": r"sudo: .* COMMAND=.*\b(/?bin/)?(sh|bash|zsh)\b(\s|$)",
-             "severity": "high", "throttle_sec": 120}
+            {"id": "SUDO_DIRECT_SHELL", "pattern": r"sudo: .* COMMAND=.*\b(/?bin/)?(sh|bash|zsh)\b(\s|$)", "severity": "high", "throttle_sec": 120}
         ]
     },
     "procmon": {
@@ -599,16 +589,14 @@ async def procmon_task(cfg: dict, sink: AlertSink, once: bool = False):
                 if kill_on_blacklist:
                     try:
                         os.kill(pid, 9)
-                        sink.emit(Alert(utcnow_iso(), "critical", "PROC", "KILLED",
-                                        f"Processus {pid} tué (blacklist: {comm})", {"pid": pid, "comm": comm}))
+                        sink.emit(Alert(utcnow_iso(), "critical", "PROC", "KILLED", f"Processus {pid} tué (blacklist: {comm})", {"pid": pid, "comm": comm}))
                     except Exception as e:
                         logging.warning("Échec kill PID %s: %s", pid, e)
 
             # 4) noms suspects (regex)
             pat = regex_any_match(sus_name_pats, comm)
             if pat and should_emit_proc("SUS_NAME_PATTERN", f"{comm}:{pat}"):
-                sink.emit(Alert(utcnow_iso(), "medium", "PROC", "SUS_NAME_PATTERN",
-                                f"Nom de processus suspect '{comm}' (pattern: {pat})", info))
+                sink.emit(Alert(utcnow_iso(), "medium", "PROC", "SUS_NAME_PATTERN", f"Nom de processus suspect '{comm}' (pattern: {pat})", info))
 
             # 5) faux threads noyau (userland avec exécutable réel)
             #    Les vrais threads noyau apparaissent souvent entre crochets et/ou sans exe.
@@ -616,25 +604,21 @@ async def procmon_task(cfg: dict, sink: AlertSink, once: bool = False):
                 # s'il y a un exécutable réel mappé, c'est louche
                 if norm_exe and norm_exe.startswith("/"):
                     if should_emit_proc("FAKE_KERNEL_THREAD", f"{comm}:{norm_exe}"):
-                        sink.emit(Alert(utcnow_iso(), "high", "PROC", "FAKE_KERNEL_THREAD",
-                                        f"'{comm}' semble un thread noyau usurpé (exe: {norm_exe})", info))
+                        sink.emit(Alert(utcnow_iso(), "high", "PROC", "FAKE_KERNEL_THREAD", f"'{comm}' semble un thread noyau usurpé (exe: {norm_exe})", info))
 
             # 6) chemins anormaux pour services système connus
             if comm in expected:
                 allowed = expected[comm]
                 if not path_under_any(allowed, norm_exe):
                     if should_emit_proc("SYSTEM_PROC_PATH_MISMATCH", f"{comm}:{norm_exe}"):
-                        sink.emit(Alert(utcnow_iso(), "high", "PROC", "SYSTEM_PROC_PATH_MISMATCH",
-                                        f"{comm} exécute un binaire hors chemins autorisés: {norm_exe}", {
-                                            "expected_prefixes": allowed, **(info or {})
-                                        }))
+                        sink.emit(Alert(utcnow_iso(), "high", "PROC", "SYSTEM_PROC_PATH_MISMATCH", f"{comm} exécute un binaire hors chemins autorisés: {norm_exe}", {
+                                            "expected_prefixes": allowed, **(info or {}) }))
 
         # 7) processus critiques manquants
         for name, allowed in expected.items():
             if not present_by_name.get(name):
                 if should_emit_proc("CRITICAL_MISSING", name):
-                    sink.emit(Alert(utcnow_iso(), "high", "PROC", "CRITICAL_MISSING",
-                                    f"Processus critique absent: {name}", {"expected_prefixes": allowed}))
+                    sink.emit(Alert(utcnow_iso(), "high", "PROC", "CRITICAL_MISSING", f"Processus critique absent: {name}", {"expected_prefixes": allowed}))
 
         if once:
             return
