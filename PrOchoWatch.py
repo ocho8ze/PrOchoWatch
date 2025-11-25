@@ -62,7 +62,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
 APP_NAME = "PrOchoWatch"
-DEFAULT_DATA_DIR = Path.home() / "Rattrapage/LogPrOchoWatch"
+DEFAULT_DATA_DIR = Path.home() / "/var/log/LogPrOchoWatch"
 
 # ------------------------ CONFIG PAR DÉFAUT ------------------------ #
 DEFAULT_CONFIG = {
